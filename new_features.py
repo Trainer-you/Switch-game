@@ -47,7 +47,6 @@ if st.session_state.rounds:
             elif last_3 == ['C', 'A', 'B'] and chair == 'C':
                 scores[chair] += 4
                 reasons[chair].append("+4 for C→A→B→C pattern")
-            # Add more rules if needed
             scores[chair] += 5 - recent["Winner"].tolist().count(chair)
             reasons[chair].append("+? for fewer recent wins")
         return scores, reasons
@@ -70,7 +69,24 @@ if st.session_state.rounds:
             reasons[chair].append("+? for fewer recent wins")
         return scores, reasons
 
-    # Choose prediction mode
+    def suggest_mode(df):
+        recent = df.tail(3)
+        last_pots = df.iloc[-1][["A", "B", "C"]]
+        winner_pattern = recent["Winner"].tolist()
+        pattern_match = winner_pattern in [["A", "B", "C"], ["B", "C", "A"], ["C", "A", "B"]]
+        pot_gap = max(last_pots) - min(last_pots) > 300
+
+        if pattern_match and not pot_gap:
+            return "Pattern Mode"
+        elif pot_gap and not pattern_match:
+            return "Pot Mode"
+        else:
+            return "Pot Mode (default)"
+
+    suggested = suggest_mode(df)
+    st.markdown(f"### 🧠 Suggested Mode: **{suggested}**")
+
+    # Run prediction
     if mode == "Pattern Mode":
         scores, reasons = pattern_mode_predictor(df)
     else:
